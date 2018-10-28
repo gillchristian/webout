@@ -23,7 +23,7 @@ import (
 
 // TODO: create CLI app
 
-var addr = flag.String("addr", "localhost:8080", "http service address")
+var addr = flag.String("addr", "gillchristian.xyz", "http service address")
 
 func main() {
 	flag.Parse()
@@ -38,7 +38,7 @@ func main() {
 	data, err := getChannel()
 	check(err)
 
-	fmt.Printf("New channel create: %s/%s\n", *addr, data.ID)
+	fmt.Printf("New channel create: %s/netpipe/%s\n", *addr, data.ID)
 
 	c, err := connect(data)
 	check(err)
@@ -108,7 +108,7 @@ func getChannel() (types.CreatedChannel, error) {
 
 func connect(channel types.CreatedChannel) (*websocket.Conn, error) {
 	u := url.URL{
-		Scheme:   "ws",
+		Scheme:   "wss",
 		Host:     *addr,
 		Path:     "/netpipe/ws/" + channel.ID,
 		RawQuery: "token=" + channel.Token,

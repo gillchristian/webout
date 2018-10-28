@@ -15,12 +15,13 @@ import (
 	"github.com/gillchristian/netpipe/types"
 )
 
+var port = flag.String("port", "8080", "port to run at")
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin:     func(r *http.Request) bool { return true },
 }
-
-var port = flag.String("port", "8080", "port to run at")
 
 type Channel struct {
 	Conns map[string]*websocket.Conn
@@ -52,6 +53,7 @@ var ts = struct {
 }
 
 func main() {
+	flag.Parse()
 	channels := Channels{}
 
 	r := mux.NewRouter()
@@ -139,6 +141,8 @@ func main() {
 	})
 
 	http.Handle("/", r)
+
+	fmt.Printf("Starting server at http://localhost:%s\n", *port)
 
 	http.ListenAndServe(":"+*port, nil)
 }
