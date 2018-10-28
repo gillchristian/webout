@@ -15,11 +15,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/gorilla/websocket"
 	"github.com/urfave/cli"
 
 	"github.com/gillchristian/netpipe/types"
 )
+
+var bold = color.New(color.Bold)
 
 func main() {
 	app := cli.NewApp()
@@ -56,7 +59,7 @@ func netpipe(ctx *cli.Context) error {
 		return cli.NewExitError(err, 1)
 	}
 
-	fmt.Println("New channel created:", channelURL(ctx.String("host"), data.ID))
+	fmt.Printf("New channel created: %s\n\n", bold.Sprint(channelURL(ctx.String("host"), data.ID)))
 
 	c, err := connect(ctx, data)
 	if err != nil {
