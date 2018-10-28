@@ -5,3 +5,7 @@ setInterval(() => {
 setInterval(() => {
   console.error('stderr')
 }, 11000)
+
+setTimeout(() => {
+  process.exit(1)
+}, 15000)
