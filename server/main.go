@@ -26,13 +26,12 @@ var upgrader = websocket.Upgrader{
 type Channel struct {
 	Conns map[string]*websocket.Conn
 	Token string
+	Close bool
 	Lines [][]byte
 }
-
 type Channels map[string]*Channel
 
-// TODO: store channel messages
-// TODO: close channel when creator disconnects
+// TODO: persist channels - files ? redis ?
 
 // GET  /               -> displays help
 // POST /               -> creates a channel -> returns `channel-id`
@@ -81,6 +80,10 @@ func main() {
 			return
 		}
 
+		if channel.Close {
+			return
+		}
+
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			conn.Close()
@@ -89,12 +92,9 @@ func main() {
 
 		channel.Conns[conn.RemoteAddr().String()] = conn
 
-		fmt.Printf("Added `%s` to the pool\n", conn.RemoteAddr())
-
 		token, ok := r.URL.Query()["token"]
 		tokenMatches := len(token) > 0 && token[0] == channel.Token
 		if !ok || !tokenMatches {
-			fmt.Printf("Client '%s' connected. Will only receive messages\n", conn.RemoteAddr())
 			return
 		}
 
@@ -104,7 +104,12 @@ func main() {
 			if err != nil {
 				fmt.Printf("Failed to read message from '%s'. Closing connection\n", conn.RemoteAddr())
 				conn.Close()
-				delete(channel.Conns, conn.RemoteAddr().String())
+				channel.Close = true
+				fmt.Printf("Channel '%s' closed. Closing all listeners\n", id)
+				for _, c := range channel.Conns {
+					c.Close()
+				}
+				channel.Conns = nil
 				return
 			}
 			channel.Lines = append(channel.Lines, msg)

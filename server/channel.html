@@ -5,9 +5,14 @@
       background-color: black;
       color: white;
     }
+    .alert {
+      padding: 10px;
+      border: 1px solid white;
+    }
   </style>
 </head>
 <body>
+  <pre id="alert"></pre>
   <pre id="output">{{ range $index, $line := .Lines }}{{ s $line }}{{ end }}</pre>
   <script src="./ws.js"></script>
 </body>

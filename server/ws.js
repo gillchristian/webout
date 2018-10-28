@@ -1,24 +1,9 @@
-const output = document.getElementById('output')
-
+let connected = false
 const socket = new WebSocket(wsUrl())
 
-let connected = false
-
-socket.onopen = function () {
-    connected = true
-}
-
-socket.onerror = function (event) {
-    if (!connected) {
-        output.innerHTML += 'Error: failed to connect'
-    } else {
-        output.innerHTML += `Error: ${JSON.stringify(event, null, 2)}`
-    }
-};
-
-socket.onmessage = function (e) {
-    output.innerHTML += e.data
-};
+socket.onmessage = handleMessage
+socket.onclose = handleClose
+socket.onerror = handleError
 
 function wsUrl() {
     const protocol = location.protocol.match(/https/) ? 'wss' : 'ws'
@@ -26,4 +11,20 @@ function wsUrl() {
     const id = location.pathname.replace(/\//g, '').replace('netpipe', '')
 
     return `${protocol}://${location.host}${pathname}/ws/${id}`
+}
+
+function handleError() {
+    const alert = document.getElementById('alert')
+    alert.classList.add('alert')
+    alert.innerHTML = 'There was an error with the socket connection.'
+}
+
+function handleClose() {
+    const alert = document.getElementById('alert')
+    alert.classList.add('alert')
+    alert.innerHTML = 'This channel is closed!'
+}
+
+function handleMessage(e) {
+    document.getElementById('output').innerHTML += e.data
 }
