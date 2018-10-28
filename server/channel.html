@@ -1,0 +1,12 @@
+<head>
+<style>
+  body {
+    background-color: black;
+    color: white;
+  }
+</style>
+</head>
+<body>
+  <pre id="output">{{ range $index, $line := .Lines }}{{ s $line }}{{ end }}</pre>
+  <script src="./ws.js"></script>
+</body>
