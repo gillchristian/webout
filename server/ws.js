@@ -7,8 +7,8 @@ socket.onerror = handleError
 
 function wsUrl() {
     const protocol = location.protocol.match(/https/) ? 'wss' : 'ws'
-    const pathname = location.host.match(/local/) ? '' : '/netpipe'
-    const id = location.pathname.replace(/\//g, '').replace('netpipe', '')
+    const pathname = location.host.match(/local/) ? '' : '/webout'
+    const id = location.pathname.replace(/\//g, '').replace('webout', '')
 
     return `${protocol}://${location.host}${pathname}/ws/${id}`
 }
