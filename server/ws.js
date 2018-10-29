@@ -17,14 +17,22 @@ function handleError() {
     const alert = document.getElementById('alert')
     alert.classList.add('alert')
     alert.innerHTML = 'There was an error with the socket connection.'
+    alert.classList.remove('hidden')
 }
 
 function handleClose() {
     const alert = document.getElementById('alert')
     alert.classList.add('alert')
     alert.innerHTML = 'This channel is closed!'
+    alert.classList.remove('hidden')
 }
 
 function handleMessage(e) {
-    document.getElementById('output').innerHTML += e.data
+    const output = document.getElementById('output')
+    const newLine = document.createElement('span')
+
+    newLine.innerHTML = e.data
+    output.appendChild(newLine)
+    // TODO: scroll not working
+    output.scrollTop = output.clientHeight 
 }

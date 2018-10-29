@@ -1,11 +1,23 @@
 <head>
   <title>netpipe | 404</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
+      margin-top: 0;
+      margin-bottom: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+
       font-family: monospace;
       background-color: black;
       color: white;
 
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    main {
+      flex: 1;
       display: flex;
       align-items: center;
       flex-direction: column;
@@ -14,16 +26,29 @@
       margin: 20px 0;
     }
     a, a:hover, a:link, a:visited, a:active {
-      text-decoration: none;
-      font-size: 1.2rem;
       color: white;
+    }
+    footer {
+      text-align: center;
+      padding: 10px 10px 20px;
+    }
+    .big {
+      font-size: 1.3rem;
+    }
+    .bold {
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <h1>404</h1>
-  <h3>Channel `{{.ID}}` doesn't exist</h3>
-  <p>
-    <a href="/netpipe">Go to /</a>
-  </p>
+  <main>
+    <h1>404</h1>
+    <h3>Channel `{{.ID}}` doesn't exist</h3>
+    <p>
+      <a class="big" href="/netpipe">Go to /</a>
+    </p>
+  </main>
+  <footer>
+    by <a class="bold" href="https://gillchristian.xyz/about-me" target="_blank">gillchristian</a>
+  </footer>
 </body>

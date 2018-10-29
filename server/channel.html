@@ -1,18 +1,56 @@
 <head>
   <title>netpipe</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body {
+      margin-top: 0;
+      margin-bottom: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+
+      font-family: monospace;
       background-color: black;
       color: white;
+
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    main {
+      flex: 1 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+    a, a:hover, a:link, a:visited, a:active {
+      color: white;
+    }
+    footer {
+      flex: none;
+      text-align: center;
+      padding: 10px 10px 20px;
     }
     .alert {
       padding: 10px;
       border: 1px solid white;
     }
+    .bold {
+      font-weight: bold;
+    }
+    .hidden {
+      display: none;
+    }
+    .output {
+      margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
-  <pre id="alert"></pre>
-  <pre id="output">{{ range $index, $line := .Lines }}{{ s $line }}{{ end }}</pre>
+  <main>
+    <pre id="alert" class="hidden"></pre>
+    <pre id="output" class="output">{{ range $index, $line := .Lines }}{{ s $line }}{{ end }}</pre>
+  </main>
+  <footer>
+    by <a class="bold" href="https://gillchristian.xyz/about-me" target="_blank">gillchristian</a>
+  </footer>
   <script src="./ws.js"></script>
 </body>
