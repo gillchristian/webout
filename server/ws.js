@@ -33,6 +33,6 @@ function handleMessage(e) {
 
     newLine.innerHTML = e.data
     output.appendChild(newLine)
-    // TODO: scroll not working
-    output.scrollTop = output.clientHeight 
+    // TODO: allow to disable (or disable on user scroll)
+    window.scrollTo({ top: output.clientHeight, behavior: 'instant' })
 }
