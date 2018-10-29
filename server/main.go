@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
-	"github.com/gillchristian/netpipe/types"
+	"github.com/gillchristian/webout/types"
 )
 
 var port = flag.String("port", "8080", "port to run at")

@@ -1,20 +1,20 @@
-# netpipe
+# webout
 
 ## Install
 
 ```
-go get -u github.com/gillchristian/netpipe/cmd/netpipe
+go get -u github.com/gillchristian/webout/cmd/webout
 ```
 
 ## Usage
 
 ```
-$ netpipe --help
+$ webout --help
 NAME:
-   netpipe - Pipe terminal output to the browser
+   webout - Pipe terminal output to the browser
 
 USAGE:
-   $ netpipe ping google.com
+   $ webout ping google.com
 
 VERSION:
    0.0.1

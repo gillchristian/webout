@@ -19,7 +19,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/urfave/cli"
 
-	"github.com/gillchristian/netpipe/types"
+	"github.com/gillchristian/webout/types"
 )
 
 var bold = color.New(color.Bold)
@@ -27,11 +27,11 @@ var bold = color.New(color.Bold)
 func main() {
 	app := cli.NewApp()
 
-	app.Name = "netpipe"
+	app.Name = "webout"
 	app.Version = "0.0.1"
 	app.Author = "Christian Gill (gillchristiang@gmail.com)"
 	app.Usage = "Pipe terminal output to the browser"
-	app.UsageText = "$ netpipe ping google.com"
+	app.UsageText = "$ webout ping google.com"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:   "host",
@@ -40,12 +40,12 @@ func main() {
 			Value: "gillchristian.xyz",
 		},
 	}
-	app.Action = netpipe
+	app.Action = webout
 
 	app.Run(os.Args)
 }
 
-func netpipe(ctx *cli.Context) error {
+func webout(ctx *cli.Context) error {
 	err := checkCmd(ctx)
 	if err != nil {
 		return cli.NewExitError(err, 1)
@@ -177,6 +177,7 @@ func runCmd(done chan<- struct{}, out chan<- []byte, bin string, args ...string)
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
+	// TODO: consider using scanner instead of reader
 	go pipeByLine(bufio.NewReader(stdout), out, &wg)
 	go pipeByLine(bufio.NewReader(stderr), out, &wg)
 
@@ -206,7 +207,7 @@ func sendErr(out chan<- []byte, err error) {
 
 func channelURL(host, id string) string {
 	scheme := "https"
-	path := "netpipe/" + id
+	path := "webout/" + id
 	if strings.Contains(host, "local") {
 		scheme = "http"
 		path = "" + id
@@ -218,7 +219,7 @@ func channelURL(host, id string) string {
 
 func wsURL(host, id, token string) string {
 	scheme := "wss"
-	path := "netpipe/ws/" + id
+	path := "webout/ws/" + id
 	query := "token=" + token
 	if strings.Contains(host, "local") {
 		scheme = "ws"
@@ -231,7 +232,7 @@ func wsURL(host, id, token string) string {
 
 func createURL(host string) string {
 	scheme := "https"
-	path := "netpipe/create"
+	path := "webout/create"
 	if strings.Contains(host, "local") {
 		scheme = "http"
 		path = "create"
