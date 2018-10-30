@@ -22,6 +22,7 @@ import (
 	"github.com/gillchristian/webout/types"
 )
 
+var host string
 var bold = color.New(color.Bold)
 
 func main() {
@@ -34,10 +35,10 @@ func main() {
 	app.UsageText = "$ webout ping google.com"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:   "host",
-			Hidden: true,
-			// use "localhost:<port>" locally
-			Value: "gillchristian.xyz",
+			Name:        "host",
+			Value:       "webout.xyz", // use "localhost:<port>" locally
+			Destination: &host,
+			Hidden:      true,
 		},
 	}
 	app.Action = webout
@@ -59,7 +60,7 @@ func webout(ctx *cli.Context) error {
 		return cli.NewExitError(err, 1)
 	}
 
-	fmt.Printf("New channel created: %s\n\n", bold.Sprint(channelURL(ctx.String("host"), data.ID)))
+	fmt.Printf("New channel created: %s\n\n", bold.Sprint(channelURL(data.ID)))
 
 	c, err := connect(ctx, data)
 	if err != nil {
@@ -113,7 +114,7 @@ func handleMsgs(done chan struct{}, out chan []byte, interrupt chan os.Signal, c
 }
 
 func getChannel(ctx *cli.Context) (types.CreatedChannel, error) {
-	u := createURL(ctx.String("host"))
+	u := createURL()
 	res, err := http.Get(u)
 	if err != nil {
 		return types.CreatedChannel{}, err
@@ -134,7 +135,7 @@ func getChannel(ctx *cli.Context) (types.CreatedChannel, error) {
 }
 
 func connect(ctx *cli.Context, channel types.CreatedChannel) (*websocket.Conn, error) {
-	u := wsURL(ctx.String("host"), channel.ID, channel.Token)
+	u := wsURL(channel.ID, channel.Token)
 
 	c, _, err := websocket.DefaultDialer.Dial(u, nil)
 	if err != nil {
@@ -144,7 +145,6 @@ func connect(ctx *cli.Context, channel types.CreatedChannel) (*websocket.Conn, e
 	return c, nil
 }
 
-// TODO: allow both running cmd and stdin pipe
 func checkCmd(ctx *cli.Context) error {
 	if ctx.NArg() == 0 {
 		return fmt.Errorf("Not enough arguments")
@@ -160,6 +160,7 @@ func checkCmd(ctx *cli.Context) error {
 	return nil
 }
 
+// TODO: allow both running cmd and stdin pipe
 func runCmd(done chan<- struct{}, out chan<- []byte, bin string, args ...string) {
 	defer func() { done <- struct{}{} }()
 	cmd := exec.Command(bin, args...)
@@ -205,38 +206,33 @@ func sendErr(out chan<- []byte, err error) {
 	out <- []byte(err.Error() + "\n")
 }
 
-func channelURL(host, id string) string {
-	scheme := "https"
-	path := "webout/" + id
-	if strings.Contains(host, "local") {
-		scheme = "http"
-		path = "" + id
-	}
-	u := url.URL{Scheme: scheme, Host: host, Path: path}
+func channelURL(id string) string {
+	u := url.URL{Scheme: scheme(), Host: host, Path: "c/" + id}
 
 	return u.String()
 }
 
-func wsURL(host, id, token string) string {
-	scheme := "wss"
-	path := "webout/ws/" + id
-	query := "token=" + token
-	if strings.Contains(host, "local") {
-		scheme = "ws"
-		path = "ws/" + id
-	}
-	u := url.URL{Scheme: scheme, Host: host, Path: path, RawQuery: query}
+func wsURL(id, token string) string {
+	u := url.URL{Scheme: wsScheme(), Host: host, Path: "c/ws/" + id, RawQuery: "token=" + token}
 
 	return u.String()
 }
 
-func createURL(host string) string {
-	scheme := "https"
-	path := "webout/create"
-	if strings.Contains(host, "local") {
-		scheme = "http"
-		path = "create"
-	}
-	u := url.URL{Scheme: scheme, Host: host, Path: path}
+func createURL() string {
+	u := url.URL{Scheme: scheme(), Host: host, Path: "api/create"}
 	return u.String()
+}
+
+func scheme() string {
+	if strings.Contains(host, "local") {
+		return "http"
+	}
+	return "https"
+}
+
+func wsScheme() string {
+	if strings.Contains(host, "local") {
+		return "ws"
+	}
+	return "wss"
 }

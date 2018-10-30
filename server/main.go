@@ -57,7 +57,7 @@ func main() {
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/create", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/api/create", func(w http.ResponseWriter, r *http.Request) {
 		id := uuid.New().String()
 		channel := newChannel()
 
@@ -67,7 +67,7 @@ func main() {
 		fmt.Fprint(w, string(data))
 	})
 
-	r.HandleFunc("/ws/{id}", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/c/ws/{id}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		id, ok := vars["id"]
 		if !ok {
@@ -125,12 +125,7 @@ func main() {
 		}
 	})
 
-	r.HandleFunc("/ws.js", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "ws.js")
-	})
-
-	r.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
-		// TODO: channel.html should inform when creator was disconnected
+	r.HandleFunc("/c/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := mux.Vars(r)["id"]
 		channel, ok := channels[id]
 		if !ok {
@@ -139,6 +134,10 @@ func main() {
 		}
 
 		ts.Channel.Execute(w, channel)
+	})
+
+	r.HandleFunc("/ws.js", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "ws.js")
 	})
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
