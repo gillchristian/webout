@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"time"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 
@@ -23,21 +23,22 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
-type Channel struct {
+// TODO: rename
+type MemChannel struct {
 	Conns map[string]*websocket.Conn
-	Token string
 	Close bool
 	Lines [][]byte
+	types.Channel
 }
-type Channels map[string]*Channel
+type Channels map[string]*MemChannel
 
 // TODO: persist channels - files ? redis ?
 
-// GET  /               -> displays help
-// POST /               -> creates a channel -> returns `channel-id`
-//                      -> the creator is the only one allowed to post messages
-// GET  /:channel-id    -> render the `channel-id` page and connects to the channel's socket
-// GET  /ws/:channel-id -> websocket for `channel-id`
+// GET  /                 -> home
+// POST /api/create       -> creates a channel -> returns `channel-id`
+//                        -> the creator is the only one allowed to post messages
+// GET  /c/:channel-id    -> render the `channel-id` page and connects to the channel's socket
+// GET  /c/ws/:channel-id -> websocket for `channel-id`
 
 var funcs = template.FuncMap{"s": func(b []byte) string { return string(b) }}
 
@@ -47,8 +48,8 @@ var ts = struct {
 }{
 	Channel: template.Must(template.New("channel.html").
 		Funcs(funcs).
-		ParseFiles("channel.html")),
-	NotFound: template.Must(template.ParseFiles("404.html")),
+		ParseFiles("templates/channel.html")),
+	NotFound: template.Must(template.ParseFiles("templates/404.html")),
 }
 
 func main() {
@@ -57,14 +58,33 @@ func main() {
 
 	r := mux.NewRouter()
 
+	db := connect()
+	defer db.Close()
+
 	r.HandleFunc("/api/create", func(w http.ResponseWriter, r *http.Request) {
-		id := uuid.New().String()
-		channel := newChannel()
+		newChan := types.Channel{
+			CreatedAt: time.Now(),
+		}
 
-		channels[id] = channel
+		err := db.Insert(&newChan)
+		if err != nil {
+			// TODO return error
+			fmt.Println(err)
+		}
 
-		data, _ := json.Marshal(types.CreatedChannel{ID: id, Token: channel.Token})
+		channel := &MemChannel{
+			Conns:   make(map[string]*websocket.Conn),
+			Lines:   [][]byte{},
+			Channel: newChan,
+		}
+
+		channels[newChan.ID] = channel
+
+		// TODO: handle error
+		data, _ := json.Marshal(newChan)
+
 		fmt.Fprint(w, string(data))
+		fmt.Println(r.Method, 200, r.URL.Path)
 	})
 
 	r.HandleFunc("/c/ws/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -92,6 +112,7 @@ func main() {
 
 		channel.Conns[conn.RemoteAddr().String()] = conn
 
+		// TODO: send error when token doesn't match
 		token, ok := r.URL.Query()["token"]
 		tokenMatches := len(token) > 0 && token[0] == channel.Token
 		if !ok || !tokenMatches {
@@ -129,34 +150,42 @@ func main() {
 		id := mux.Vars(r)["id"]
 		channel, ok := channels[id]
 		if !ok {
-			ts.NotFound.Execute(w, struct{ ID string }{id})
+			w.WriteHeader(http.StatusNotFound)
+			if err := ts.NotFound.Execute(w, struct{ ID string }{id}); err != nil {
+				w.WriteHeader(http.StatusNotFound) // Calling twice uses the last one?
+				http.ServeFile(w, r, "public/500.html")
+				fmt.Println(r.Method, 500, r.URL.Path, err)
+			} else {
+				fmt.Println(r.Method, 404, r.URL.Path)
+			}
 			return
 		}
 
-		ts.Channel.Execute(w, channel)
+		// TODO: add func to execute template and handle errors
+		if err := ts.Channel.Execute(w, channel); err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			http.ServeFile(w, r, "public/500.html")
+			fmt.Println(r.Method, 500, r.URL.Path, err)
+		} else {
+			fmt.Println(r.Method, 200, r.URL.Path)
+		}
 	})
 
+	// TODO: ServeFile should work for serving the whole directory
 	r.HandleFunc("/ws.js", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "ws.js")
+		http.ServeFile(w, r, "public/ws.js")
+		fmt.Println(r.Method, 200, r.URL.Path)
 	})
 
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "index.html")
+		http.ServeFile(w, r, "public/index.html")
+		fmt.Println(r.Method, 200, r.URL.Path)
 	})
 
 	http.Handle("/", r)
 
 	fmt.Printf("Starting server at http://localhost:%s\n", *port)
 
-	http.ListenAndServe(":"+*port, nil)
-}
-
-func newChannel() *Channel {
-	channel := Channel{
-		Conns: make(map[string]*websocket.Conn),
-		Token: uuid.New().String(),
-		Lines: [][]byte{},
-	}
-
-	return &channel
+	err := http.ListenAndServe(":"+*port, nil)
+	fmt.Println(err) // http.ListenAndServe error is never nil
 }
