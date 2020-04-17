@@ -113,28 +113,28 @@ func handleMsgs(done chan struct{}, out chan []byte, interrupt chan os.Signal, c
 	}
 }
 
-func getChannel(ctx *cli.Context) (types.CreatedChannel, error) {
+func getChannel(ctx *cli.Context) (types.Channel, error) {
 	u := createURL()
 	res, err := http.Get(u)
 	if err != nil {
-		return types.CreatedChannel{}, err
+		return types.Channel{}, err
 	}
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return types.CreatedChannel{}, err
+		return types.Channel{}, err
 	}
 
-	data := types.CreatedChannel{}
+	data := types.Channel{}
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		return types.CreatedChannel{}, err
+		return types.Channel{}, err
 	}
 	return data, nil
 }
 
-func connect(ctx *cli.Context, channel types.CreatedChannel) (*websocket.Conn, error) {
+func connect(ctx *cli.Context, channel types.Channel) (*websocket.Conn, error) {
 	u := wsURL(channel.ID, channel.Token)
 
 	c, _, err := websocket.DefaultDialer.Dial(u, nil)
